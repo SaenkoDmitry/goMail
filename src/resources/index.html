@@ -1,0 +1,128 @@
+<html>
+
+ <head>
+  <title>goMail</title>
+  <link rel="stylesheet" type="text/css" href="style.css"> <!-- CSS -->
+ </head>
+
+ <body>
+ <div class="background-image"></div>
+
+
+   <div class="login-wrap">
+  <div class="login-html">
+    <input id="tab-1" type="radio" name="tab" class="sign-in" checked><label for="tab-1" class="tab">Sign In</label>
+    <input id="tab-2" type="radio" name="tab" class="sign-up"><label for="tab-2" class="tab">Sign Up</label>
+    <div class="login-form">
+
+    <form method="POST" class="sign-in-htm" id="nameformIn" action="javascript:void(null);">
+
+          <div class="group">
+            <label for="user" class="label"><b>Username</b></label>
+            <input id="user" name="user" class="input" type="text">
+          </div>
+
+          <div class="group">
+            <label for="pass" class="label"><b>Password</b></label>
+            <input id="password" name="password" class="input" type="password">
+          </div>
+
+
+          <div class="group">
+            <input type="submit" class="button" onclick="newUser(this)" value="Sign In">
+          </div>
+
+          <div class="hr"></div>
+          <div class="foot-lnk">
+            <a href="#forgot">Forgot Password?</a>
+          </div>
+    </form>
+
+    <form method="POST" class="sign-up-htm" id="nameformUp" action="javascript:void(null);">
+
+          <div class="group">
+          <label for="user" class="label">Username</label>
+          <input id="user" name="user" class="input" type="text">
+        </div>
+        <div class="group">
+          <label for="pass" class="label">Password</label>
+          <input id="password" name="password" class="input" type="password">
+        </div>
+        <div class="group">
+          <label for="pass" class="label">Repeat Password</label>
+          <input id="password" name="second-password" class="input" type="password">
+        </div>
+        <div class="group">
+          <label for="pass" class="label">Email Address</label>
+          <input id="address" name="address" class="input" type="text">
+        </div>
+
+          <div class="group">
+            <input type="submit" class="button" onclick="newSession(this)" value="Sign Up">
+          </div>
+          <div class="hr"></div>
+          <div class="foot-lnk">
+            <label for="tab-1">Already Member?</a>
+          </div>
+    </form>
+
+    </div>
+  </div>
+</div>
+ </body>
+ 
+ </html>
+
+ <script src="lib/js-cookie.js"></script>
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script>
+    function newUser(obj) {
+        var urlpath = "http://localhost:9090";
+
+        var credentials = $('#nameformIn').serialize();
+        console.log(credentials);
+        console.log("credentials");
+
+        var settings = {
+            "method": "GET",
+            "crossDomain": true,
+            "url": urlpath + "/sign-in",
+            "data": credentials
+        }
+
+        $.ajax(settings).done(function(response) {
+            window.location.assign(response);
+        }).fail(function (jqXHR, textStatus) {
+            alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+            window.location = "/";
+        });
+    }
+
+    function newSession(obj) {
+        var urlpath = "http://localhost:9090";
+
+        var credentials = $('#nameformUp').serialize();
+        console.log(credentials);
+        console.log("credentials");
+
+        var settings = {
+            "method": "GET",
+            "crossDomain": true,
+            "url": urlpath + "/sign-up",
+            "data": credentials
+        }
+
+        $.ajax(settings).done(function(response) {
+            window.location.assign(response);
+        }).fail(function (jqXHR, textStatus) {
+            alert(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+            console.log(jqXHR.status + " " + jqXHR.statusText + ". " + jqXHR.responseText);
+            window.location = "/";
+        });
+
+    }
+
+
+</script>
