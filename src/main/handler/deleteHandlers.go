@@ -5,7 +5,6 @@ import (
 	"github.com/gorilla/mux"
 	"main/utils"
 	"main/dbs/mysql"
-	"strconv"
 )
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
@@ -27,9 +26,8 @@ func deleteSpace(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	s, err := strconv.ParseUint(b, 10, 64)
-	checkErr(err)
-	if !mysql.CheckPermissionsOnSpace(user.Id, s) {
+	space, exists := mysql.GetSpace(b, user.Id)
+	if !exists || !mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -51,12 +49,12 @@ func deleteTuple(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	s, err := strconv.ParseUint(b, 10, 64)
-	checkErr(err)
-	if !mysql.CheckPermissionsOnSpace(user.Id, s) {
+	space, exists := mysql.GetSpace(b, user.Id)
+	if !exists || !mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	mysql.AddHistory(user.Id, space.Id, "", "")
 	// tarantool -------------------------------------------------------------
 	//js, _ := json.Marshal(c)
 	w.WriteHeader(http.StatusOK)

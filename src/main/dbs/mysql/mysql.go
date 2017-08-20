@@ -82,6 +82,14 @@ func DeleteSpace(name string) {
 	checkErr(err)
 }
 
+func AddPermission(user_id uint64, space_id uint64) {
+	db := GetDb()
+	stmt, err := db.Prepare("INSERT permissions SET user_id=?, space_id=?")
+	checkErr(err)
+	_, err = stmt.Exec(user_id, space_id)
+	checkErr(err)
+}
+
 func GetUserPermissions(user_id uint64) (model.Permission, bool) {
 	db := GetDb()
 	rows, err := db.Query("SELECT * FROM permissions where user_id=?", user_id)

@@ -29,7 +29,13 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var exists bool
-		token, exists = utils.Cookies[hash]
+		for k, v := range utils.Cookies {
+			if v == a {
+				token = k
+				exists = true
+
+			}
+		}
 		if exists != true {
 			var err error
 			token, err = utils.CreateToken(a, b)
@@ -51,6 +57,8 @@ func addSpace(w http.ResponseWriter, r *http.Request) {
 	b := vars["name_space"]
 	if exists && exs {
 		mysql.AddSpace(b, user.Id)
+		space, _ := mysql.GetSpace(b, user.Id)
+		mysql.AddPermission(user.Id, space.Id)
 		//add tarantool space --------------------------------------------------------------------------
 	} else {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -68,11 +76,20 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 	b := vars["name_space"]
 	space, exs2 := mysql.GetSpace(b, user.Id)
 	c := vars["name_tuple"]
-	if exists && exs1 && exs2 && mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
+	if !exs1 || !exists {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if !exs2 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		fmt.Println(c)
+		mysql.AddHistory(user.Id, space.Id, "", "")
 		//add tarantool tuple ----------------------------------------------------------------------------
 	} else {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -87,11 +104,19 @@ func addPermission(w http.ResponseWriter, r *http.Request) {
 	b := vars["name"]
 	space, exs2 := mysql.GetSpace(b, user.Id)
 	c := vars["name_space"]
-	if exists && exs1 && exs2 && mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
-		fmt.Println(c)
-		//add tarantool tuple ----------------------------------------------------------------------------
-	} else {
+	if !exs1 || !exists {
 		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if !exs2 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
+		fmt.Println(c)
+		mysql.AddPermission(user.Id, space.Id)
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

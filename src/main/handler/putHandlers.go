@@ -19,6 +19,7 @@ func updateTuple(w http.ResponseWriter, r *http.Request) {
 	c := vars["name_tuple"]
 	if exists && exs1 && exs2 && mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		fmt.Println(c)
+		mysql.AddHistory(user.Id, space.Id, "", "")
 		//update tarantool tuple ----------------------------------------------------------------------------
 	} else {
 		w.WriteHeader(http.StatusUnauthorized)

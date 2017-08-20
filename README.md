@@ -4,7 +4,7 @@
     * /users -- получение списка пользователей
         * curl -X GET -i http://localhost:9090/users
     * /spaces -- получение списка пространств пользователя
-        * curl -X GET -i http://localhost:9090/spaces
+        * curl -X GET -H "Authorization: Bearer token" -i http://localhost:9090/spaces
     * /history -- получение истории пользователя
         * curl -X GET -H "Authorization: Bearer token" -i http://localhost:9090/history
     * /space/{name_space}/history -- получение истории работы с пространством
