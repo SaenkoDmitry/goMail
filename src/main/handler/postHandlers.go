@@ -7,6 +7,7 @@ import (
 	"main/dbs/mysql"
 	"github.com/gorilla/mux"
 	"fmt"
+	"main/dbs/tarantool"
 )
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
@@ -71,11 +72,30 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
 	token := r.Header.Get("Authorization")[7:]
+
+	// temporarily
+	data := []byte(`
+    [
+        "k34rAT4",
+        24,
+        [
+			"aaa",
+			15
+        ],
+        1.25
+    ]
+	`)
+	var data1 []interface{}
+	err := json.Unmarshal(data, &data1)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	a, exists := utils.Cookies[token]
 	user, exs1 := mysql.GetUser(a)
 	b := vars["name_space"]
 	space, exs2 := mysql.GetSpace(b, user.Id)
-	c := vars["name_tuple"]
+	c := vars["id_tuple"]
 	if !exs1 || !exists {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -88,6 +108,8 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(c)
 		mysql.AddHistory(user.Id, space.Id, "", "")
 		//add tarantool tuple ----------------------------------------------------------------------------
+
+		tarantool.InsertTuple(uint32(c), b, user.Id, data1)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

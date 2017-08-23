@@ -6,6 +6,13 @@ import (
 	"main/model"
 )
 
+
+var mysqlConn *sql.DB
+
+func init() {
+	mysqlConn = InitMysql()
+}
+
 func checkErr(err error) {
 	if err != nil {
 		fmt.Println(err)
@@ -14,8 +21,7 @@ func checkErr(err error) {
 }
 
 func GetUser(name string) (model.User, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM users where name=?", name)
+	rows, err := mysqlConn.Query("SELECT * FROM users where name=?", name)
 	checkErr(err)
 	b := rows.Next()
 	var user model.User
@@ -24,25 +30,34 @@ func GetUser(name string) (model.User, bool) {
 	return user, b
 }
 
+func SelectAllUser() ([]model.User) {
+	rows, err := mysqlConn.Query("SELECT * FROM users")
+	var a[]model.User
+	var temp model.User
+	for rows.Next() {
+		err = rows.Scan(&temp.Id, &temp.Name, &temp.HashPassword)
+		a = append(a, temp)
+		checkErr(err)
+	}
+	return a
+}
+
 func AddUser(name string, hash string) {
-	db := GetDb()
-	stmt, err := db.Prepare("INSERT users SET name=?, hash_password=?")
+	stmt, err := mysqlConn.Prepare("INSERT users SET name=?, hash_password=?")
 	checkErr(err)
 	_, err = stmt.Exec(name, hash)
 	checkErr(err)
 }
 
 func DeleteUser(name string) {
-	db := GetDb()
-	stmt, err := db.Prepare("DELETE FROM users WHERE name=?")
+	stmt, err := mysqlConn.Prepare("DELETE FROM users WHERE name=?")
 	checkErr(err)
 	_, err = stmt.Exec(name)
 	checkErr(err)
 }
 
 func GetSpace(name string, user_id uint64) (model.Space, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM spaces where name=? AND user_id=?", name, user_id)
+	rows, err := mysqlConn.Query("SELECT * FROM spaces where name=? AND user_id=?", name, user_id)
 	checkErr(err)
 	b := rows.Next()
 	var space model.Space
@@ -52,8 +67,7 @@ func GetSpace(name string, user_id uint64) (model.Space, bool) {
 }
 
 func GetAllSpaces(user_id uint64) ([]model.Space, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM spaces where user_id=?", user_id)
+	rows, err := mysqlConn.Query("SELECT * FROM spaces where user_id=?", user_id)
 	checkErr(err)
 	var space model.Space
 	var spaces []model.Space
@@ -67,32 +81,28 @@ func GetAllSpaces(user_id uint64) ([]model.Space, bool) {
 }
 
 func AddSpace(name string, user_id uint64) {
-	db := GetDb()
-	stmt, err := db.Prepare("INSERT spaces SET name=?, user_id=?")
+	stmt, err := mysqlConn.Prepare("INSERT spaces SET name=?, user_id=?")
 	checkErr(err)
 	_, err = stmt.Exec(name, user_id)
 	checkErr(err)
 }
 
 func DeleteSpace(name string) {
-	db := GetDb()
-	stmt, err := db.Prepare("DELETE FROM spaces WHERE name=?")
+	stmt, err := mysqlConn.Prepare("DELETE FROM spaces WHERE name=?")
 	checkErr(err)
 	_, err = stmt.Exec(name)
 	checkErr(err)
 }
 
 func AddPermission(user_id uint64, space_id uint64) {
-	db := GetDb()
-	stmt, err := db.Prepare("INSERT permissions SET user_id=?, space_id=?")
+	stmt, err := mysqlConn.Prepare("INSERT permissions SET user_id=?, space_id=?")
 	checkErr(err)
 	_, err = stmt.Exec(user_id, space_id)
 	checkErr(err)
 }
 
 func GetUserPermissions(user_id uint64) (model.Permission, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM permissions where user_id=?", user_id)
+	rows, err := mysqlConn.Query("SELECT * FROM permissions where user_id=?", user_id)
 	checkErr(err)
 	b := rows.Next()
 	var permissions model.Permission
@@ -102,8 +112,7 @@ func GetUserPermissions(user_id uint64) (model.Permission, bool) {
 }
 
 func GetSpacePermissions(space_id uint64) ([]model.Permission, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM permissions where space_id=?", space_id)
+	rows, err := mysqlConn.Query("SELECT * FROM permissions where space_id=?", space_id)
 	checkErr(err)
 	var b bool
 	var permissions []model.Permission
@@ -118,16 +127,14 @@ func GetSpacePermissions(space_id uint64) ([]model.Permission, bool) {
 }
 
 func CheckPermissionsOnSpace(user_id uint64, space_id uint64) bool {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM permissions where user_id=? and space_id=?", user_id, space_id)
+	rows, err := mysqlConn.Query("SELECT * FROM permissions where user_id=? and space_id=?", user_id, space_id)
 	checkErr(err)
 	b := rows.Next()
 	return b
 }
 
 func GetUserHistory(user_id uint64) ([]model.History, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM history where user_id=?", user_id)
+	rows, err := mysqlConn.Query("SELECT * FROM history where user_id=?", user_id)
 	checkErr(err)
 	var hist model.History
 	var hists []model.History
@@ -141,8 +148,7 @@ func GetUserHistory(user_id uint64) ([]model.History, bool) {
 }
 
 func GetSpaceHistory(space_id uint64) ([]model.History, bool) {
-	db := GetDb()
-	rows, err := db.Query("SELECT * FROM history where space_id=?", space_id)
+	rows, err := mysqlConn.Query("SELECT * FROM history where space_id=?", space_id)
 	checkErr(err)
 	var hist model.History
 	var hists []model.History
@@ -156,18 +162,17 @@ func GetSpaceHistory(space_id uint64) ([]model.History, bool) {
 }
 
 func AddHistory(user_id uint64, space_id uint64, command string, result string) {
-	db := GetDb()
-	stmt, err := db.Prepare("INSERT spaces SET user_id=?, space_id=?, command=?, result=?")
+	stmt, err := mysqlConn.Prepare("INSERT spaces SET user_id=?, space_id=?, command=?, result=?")
 	checkErr(err)
 	_, err = stmt.Exec(stmt, user_id, space_id, command, result)
 	checkErr(err)
 }
 
-func GetDb() (sql.DB) {
+func InitMysql() (*sql.DB) {
 	db, err := sql.Open("mysql", "adminGo:gomail@tcp(localhost:3306)/tarantool_spaces_store?charset=utf8")
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
-	return *db
+	return db
 }

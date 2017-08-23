@@ -12,16 +12,10 @@ import (
 )
 
 func getAllUsers(w http.ResponseWriter, r *http.Request) {
-	db := mysql.GetDb()
-	rows, err := db.Query("SELECT * FROM users")
 	var a[]model.User
-	var temp model.User
-	for rows.Next() {
-		err = rows.Scan(&temp.Id, &temp.Name, &temp.HashPassword)
-		a = append(a, temp)
-		checkErr(err)
-	}
+	a = mysql.SelectAllUser()
 	js, err := json.Marshal(a)
+	checkErr(err)
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }

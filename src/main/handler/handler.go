@@ -22,18 +22,18 @@ func InitHandlers(router *mux.Router) {
 	router.HandleFunc("/space/{name_space}/history", getSpaceHistory).Methods("GET")
 	router.HandleFunc("/spaces/{name_space}/permissions", getAllSpacePermissions).Methods("GET")
 	router.HandleFunc("/spaces/{name_space}/tuples", getAllTuples).Methods("GET")
-	router.HandleFunc("/spaces/{name_space}/tuples/{name_tuple}", getTuple).Methods("GET")
+	router.HandleFunc("/spaces/{name_space}/tuples/{id_tuple}", getTuple).Methods("GET")
 
 	router.HandleFunc("/users", loginUser).Methods("POST")
 	router.HandleFunc("/spaces/{name_space}", addSpace).Methods("POST")
-	router.HandleFunc("/spaces/{name_space}/tuples/{name_tuple}", addTuple).Methods("POST")
+	router.HandleFunc("/spaces/{name_space}/tuples/{id_tuple}", addTuple).Methods("POST")
 	router.HandleFunc("/users/{name}/spaces/{name_space}/permissions", addPermission).Methods("POST")
 
-	router.HandleFunc("/spaces/{name_space}/tuples/{name_tuple}", updateTuple).Methods("PUT")
+	router.HandleFunc("/spaces/{name_space}/tuples/{id_tuple}", updateTuple).Methods("PUT")
 	//router.HandleFunc("/users/{name}/spaces/{name_space}/permissions/{value}", updatePermissions).Methods("PUT")
 
 	//router.HandleFunc("/users", deleteUser).Methods("DELETE")
 	//router.HandleFunc("/users/{name}/permissions", deletePermission).Methods("DELETE")
 	router.HandleFunc("/spaces/{name_space}", deleteSpace).Methods("DELETE")
-	router.HandleFunc("/spaces/{name_space}/tuples/{name_tuple}", deleteTuple).Methods("DELETE")
+	router.HandleFunc("/spaces/{name_space}/tuples/{id_tuple}", deleteTuple).Methods("DELETE")
 }
