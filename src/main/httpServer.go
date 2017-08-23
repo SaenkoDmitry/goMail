@@ -5,14 +5,17 @@ import (
 	//"net/http"
 	//"github.com/tarantool/go-tarantool"
 	"database/sql"
+
 	_ "github.com/go-sql-driver/mysql"
 	//"main/utils"
 	//"github.com/gorilla/mux"
-	"github.com/gorilla/mux"
+	"log"
 	"main/handler"
 	"net/http"
-	"log"
+
+	"github.com/gorilla/mux"
 	//"main/dbs/mysql"
+	//"main/workerpool"
 )
 
 func checkErr(err error) {
@@ -53,6 +56,8 @@ func main() {
 	router := mux.NewRouter()
 	handler.InitHandlers(router)
 
+	pool := NewPool(5) //create pool
+	pool.Wait()
 	err := http.ListenAndServe(":9090", router) // set listen port
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

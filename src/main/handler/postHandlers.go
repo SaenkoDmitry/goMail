@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"net/http"
-	"main/utils"
 	"encoding/json"
-	"main/dbs/mysql"
-	"github.com/gorilla/mux"
 	"fmt"
+	"main/dbs/mysql"
 	"main/dbs/tarantool"
+	"main/utils"
+	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
@@ -107,8 +108,10 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 	if mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		fmt.Println(c)
 		mysql.AddHistory(user.Id, space.Id, "", "")
-		//add tarantool tuple ----------------------------------------------------------------------------
-
+		//try add tarantool tuple ----------------------------------------------------------------------------
+		t := TarantoolTask{command: "insert", tuple_id: c, name_space: b, user_id: user.Id, data: data1}
+		pool.Exec(TarantoolTask(t))
+		//----------------------------------------------------------------------------------------------------
 		tarantool.InsertTuple(uint32(c), b, user.Id, data1)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
