@@ -4,7 +4,6 @@ import (
 	"fmt"
 	//"net/http"
 	//"github.com/tarantool/go-tarantool"
-	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
 	//"main/utils"
@@ -16,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	//"main/dbs/mysql"
 	//"main/workerpool"
+	"main/workerpool"
 )
 
 func checkErr(err error) {
@@ -25,43 +25,17 @@ func checkErr(err error) {
 	}
 }
 
-func selectFromUsers(db *sql.DB, dbname string) {
-	rows, err := db.Query("SELECT * FROM users")
-	checkErr(err)
-
-	for rows.Next() {
-		var username string
-		var token string
-		err = rows.Scan(&username, &token)
-		checkErr(err)
-		fmt.Println("user: " + username + "; token: " + token)
-	}
-}
-
-func insertTo(db *sql.DB, dbname string) {
-	stmt, err := db.Prepare("INSERT users SET username=?, token=?")
-	checkErr(err)
-
-	res, err := stmt.Exec("user5", "12345")
-	checkErr(err)
-
-	id, err := res.LastInsertId()
-	checkErr(err)
-
-	fmt.Println(id)
-}
-
 func main() {
 
 	router := mux.NewRouter()
 	handler.InitHandlers(router)
 
-	pool := NewPool(5) //create pool
-	pool.Wait()
+	workerpool.MainPool = workerpool.NewPool(5) //create pool
 	err := http.ListenAndServe(":9090", router) // set listen port
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+
 	//token, _ := utils.CreateToken("user", "12345")
 	//fmt.Println(token)
 	//res := utils.ParseToken(token)

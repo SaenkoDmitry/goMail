@@ -12,77 +12,79 @@ type Task interface {
 	Execute()
 }
 
+var MainPool *Pool
+
 type Pool struct {
-	mu    sync.Mutex
-	size  int
-	tasks chan Task
-	kill  chan struct{}
-	wg    sync.WaitGroup
+	Mu    sync.Mutex
+	Size  int
+	Tasks chan Task
+	Kill  chan struct{}
+	Wg    sync.WaitGroup
 }
 
 type TarantoolTask struct {
-	command    string
-	tuple_id   uint32
-	name_space string
-	user_id    uint64
-	data       interface{}
+	Command    string
+	Tuple_id   uint64
+	Name_space string
+	User_id    uint64
+	Data       interface{}
 }
 
 func NewPool(size int) *Pool {
 	pool := &Pool{
-		tasks: make(chan Task, 128),
-		kill:  make(chan struct{}),
+		Tasks: make(chan Task, 128),
+		Kill:  make(chan struct{}),
 	}
 	pool.Resize(size)
 	return pool
 }
 
 func (p *Pool) worker() {
-	defer p.wg.Done()
+	defer p.Wg.Done()
 	for {
 		select {
-		case task, ok := <-p.tasks:
+		case task, ok := <-p.Tasks:
 			if !ok {
 				return
 			}
 			task.Execute()
-		case <-p.kill:
+		case <-p.Kill:
 			return
 		}
 	}
 }
 
 func (p *Pool) Resize(n int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	for p.size < n {
-		p.size++
-		p.wg.Add(1)
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	for p.Size < n {
+		p.Size++
+		p.Wg.Add(1)
 		go p.worker()
 	}
-	for p.size > n {
-		p.size--
-		p.kill <- struct{}{}
+	for p.Size > n {
+		p.Size--
+		p.Kill <- struct{}{}
 	}
 }
 
 func (p *Pool) Close() {
-	close(p.tasks)
+	close(p.Tasks)
 }
 
 func (p *Pool) Wait() {
-	p.wg.Wait()
+	p.Wg.Wait()
 }
 
 func (p *Pool) Exec(task Task) {
-	p.tasks <- task
+	p.Tasks <- task
 }
 
 func (e TarantoolTask) Execute() {
 	//name_spaceT := convertToNameInTarantool(e.name_space, e.user_id)
 	name_spaceT := "examples"
 	tarantoolConn := InitTarantool()
-	_, err := tarantoolConn.Insert(name_spaceT, []interface{}{e.tuple_id, e.data})
+	_, err := tarantoolConn.Insert(name_spaceT, []interface{}{e.Tuple_id, e.Data})
 	if err != nil {
 		fmt.Println(err.Error())
 	}

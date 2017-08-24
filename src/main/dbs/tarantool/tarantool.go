@@ -38,6 +38,31 @@ func convertToNameInTarantool(name string, user_id uint64) string {
 	return name + fmt.Sprintf("%v", user_id)
 }
 
+func CreateSpace(name string, user_id uint64) {
+	name = convertToNameInTarantool(name, user_id)
+	fmt.Println(name)
+	resp, err := tarantoolConn.Eval("box.schema.user.grant('test', 'read,write,execute', 'universe')\n" +
+		"box.schema.user.grant('test','read,write','space','" + name + "')\n" +
+		"box.schema.space.create('" + name + "', {id=10})\n" +
+		"box.space." + name + ":create_index('primary', {type = 'hash', parts = {1, 'NUM'}})\n",[] interface{}{})
+	if err != nil {
+		fmt.Println("0000")
+		fmt.Println(err)
+	}
+	fmt.Println("0001")
+	fmt.Println(resp.Data)
+}
+
+func SelectSpace(name string, user_id uint64) {
+	name_spaceT := convertToNameInTarantool(name, user_id)
+
+	resp, err := tarantoolConn.Select(name_spaceT, "primary", 0, 1, tarantool.IterEq, []interface{}{})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(resp.Data)
+}
+
 func DeleteTuple(tuple_id uint32, name_space string, user_id uint64) {
 	name_spaceT := convertToNameInTarantool(name_space, user_id)
 	name_spaceT = "examples" // temporary -------------------------------------------
@@ -48,7 +73,7 @@ func DeleteTuple(tuple_id uint32, name_space string, user_id uint64) {
 	fmt.Println(resp.Data)
 }
 
-func SelectTuple(tuple_id uint32, name_space string, user_id uint64) {
+func SelectTuple(tuple_id uint64, name_space string, user_id uint64) {
 	name_spaceT := convertToNameInTarantool(name_space, user_id)
 	name_spaceT = "examples" // temporary -------------------------------------------
 
@@ -59,9 +84,8 @@ func SelectTuple(tuple_id uint32, name_space string, user_id uint64) {
 	fmt.Println(resp.Data)
 }
 
-func InsertTuple(tuple_id uint32, name_space string, user_id uint64, data interface{}) {
+func InsertTuple(tuple_id uint64, name_space string, user_id uint64, data interface{}) {
 	name_spaceT := convertToNameInTarantool(name_space, user_id)
-	name_spaceT = "examples" // temporary -------------------------------------------
 
 	_, err := tarantoolConn.Insert(name_spaceT, []interface{}{tuple_id, data})
 	if err != nil {

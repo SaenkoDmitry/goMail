@@ -23,23 +23,29 @@ func checkErr(err error) {
 func GetUser(name string) (model.User, bool) {
 	rows, err := mysqlConn.Query("SELECT * FROM users where name=?", name)
 	checkErr(err)
-	b := rows.Next()
 	var user model.User
-	err = rows.Scan(&user.Id, &user.Name, &user.HashPassword)
-	checkErr(err)
-	return user, b
+	if err == nil {
+		b := rows.Next()
+		err = rows.Scan(&user.Id, &user.Name, &user.HashPassword)
+		checkErr(err)
+		return user, b
+	}
+	return user, false
 }
 
 func SelectAllUser() ([]model.User) {
 	rows, err := mysqlConn.Query("SELECT * FROM users")
 	var a[]model.User
 	var temp model.User
-	for rows.Next() {
-		err = rows.Scan(&temp.Id, &temp.Name, &temp.HashPassword)
-		a = append(a, temp)
-		checkErr(err)
+	if err == nil {
+		for rows.Next() {
+			err = rows.Scan(&temp.Id, &temp.Name, &temp.HashPassword)
+			a = append(a, temp)
+			checkErr(err)
+		}
+		return a
 	}
-	return a
+	return nil
 }
 
 func AddUser(name string, hash string) {
@@ -59,11 +65,14 @@ func DeleteUser(name string) {
 func GetSpace(name string, user_id uint64) (model.Space, bool) {
 	rows, err := mysqlConn.Query("SELECT * FROM spaces where name=? AND user_id=?", name, user_id)
 	checkErr(err)
-	b := rows.Next()
 	var space model.Space
-	err = rows.Scan(&space.Id, &space.Name, &space.UserId)
-	checkErr(err)
-	return space, b
+	if err == nil {
+		b := rows.Next()
+		err = rows.Scan(&space.Id, &space.Name, &space.UserId)
+		checkErr(err)
+		return space, b
+	}
+	return space, false
 }
 
 func GetAllSpaces(user_id uint64) ([]model.Space, bool) {
@@ -72,12 +81,15 @@ func GetAllSpaces(user_id uint64) ([]model.Space, bool) {
 	var space model.Space
 	var spaces []model.Space
 	var b bool
-	for rows.Next() {
-		b = true
-		err = rows.Scan(&space.Id, &space.Name, &space.UserId)
-		spaces = append(spaces, space)
+	if err == nil {
+		for rows.Next() {
+			b = true
+			err = rows.Scan(&space.Id, &space.Name, &space.UserId)
+			spaces = append(spaces, space)
+		}
+		return spaces, b
 	}
-	return spaces, b
+	return spaces, false
 }
 
 func AddSpace(name string, user_id uint64) {
@@ -104,11 +116,14 @@ func AddPermission(user_id uint64, space_id uint64) {
 func GetUserPermissions(user_id uint64) (model.Permission, bool) {
 	rows, err := mysqlConn.Query("SELECT * FROM permissions where user_id=?", user_id)
 	checkErr(err)
-	b := rows.Next()
 	var permissions model.Permission
-	err = rows.Scan(&permissions.Id, &permissions.User_id, &permissions.Space_id)
-	checkErr(err)
-	return permissions, b
+	if err == nil {
+		b := rows.Next()
+		err = rows.Scan(&permissions.Id, &permissions.User_id, &permissions.Space_id)
+		checkErr(err)
+		return permissions, b
+	}
+	return permissions, false
 }
 
 func GetSpacePermissions(space_id uint64) ([]model.Permission, bool) {
@@ -117,13 +132,16 @@ func GetSpacePermissions(space_id uint64) ([]model.Permission, bool) {
 	var b bool
 	var permissions []model.Permission
 	var permission model.Permission
-	for rows.Next() {
-		b = true
-		err = rows.Scan(&permission.Id, &permission.User_id, &permission.Space_id)
-		checkErr(err)
-		permissions = append(permissions, permission)
+	if err == nil {
+		for rows.Next() {
+			b = true
+			err = rows.Scan(&permission.Id, &permission.User_id, &permission.Space_id)
+			checkErr(err)
+			permissions = append(permissions, permission)
+		}
+		return permissions, b
 	}
-	return permissions, b
+	return permissions, false
 }
 
 func CheckPermissionsOnSpace(user_id uint64, space_id uint64) bool {
@@ -139,12 +157,15 @@ func GetUserHistory(user_id uint64) ([]model.History, bool) {
 	var hist model.History
 	var hists []model.History
 	var b bool
-	for rows.Next() {
-		b = true
-		err = rows.Scan(&hist.Id, &hist.User_id, &hist.Space_id, &hist.Command)
-		hists = append(hists, hist)
+	if err == nil {
+		for rows.Next() {
+			b = true
+			err = rows.Scan(&hist.Id, &hist.User_id, &hist.Space_id, &hist.Command)
+			hists = append(hists, hist)
+		}
+		return hists, b
 	}
-	return hists, b
+	return hists, false
 }
 
 func GetSpaceHistory(space_id uint64) ([]model.History, bool) {
@@ -153,12 +174,15 @@ func GetSpaceHistory(space_id uint64) ([]model.History, bool) {
 	var hist model.History
 	var hists []model.History
 	var b bool
-	for rows.Next() {
-		b = true
-		err = rows.Scan(&hist.Id, &hist.User_id, &hist.Space_id, &hist.Command)
-		hists = append(hists, hist)
+	if err == nil {
+		for rows.Next() {
+			b = true
+			err = rows.Scan(&hist.Id, &hist.User_id, &hist.Space_id, &hist.Command)
+			hists = append(hists, hist)
+		}
+		return hists, b
 	}
-	return hists, b
+	return hists, false
 }
 
 func AddHistory(user_id uint64, space_id uint64, command string, result string) {

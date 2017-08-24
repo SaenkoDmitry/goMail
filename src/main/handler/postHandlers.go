@@ -7,8 +7,9 @@ import (
 	"main/dbs/tarantool"
 	"main/utils"
 	"net/http"
-
 	"github.com/gorilla/mux"
+	"strconv"
+	"main/workerpool"
 )
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +98,7 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 	b := vars["name_space"]
 	space, exs2 := mysql.GetSpace(b, user.Id)
 	c := vars["id_tuple"]
+	id, _ := strconv.ParseUint(c, 10, 64)
 	if !exs1 || !exists {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -109,10 +111,11 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(c)
 		mysql.AddHistory(user.Id, space.Id, "", "")
 		//try add tarantool tuple ----------------------------------------------------------------------------
-		t := TarantoolTask{command: "insert", tuple_id: c, name_space: b, user_id: user.Id, data: data1}
-		pool.Exec(TarantoolTask(t))
+		t := workerpool.TarantoolTask{"insert", id, b, user.Id, data1}
+		workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
 		//----------------------------------------------------------------------------------------------------
-		tarantool.InsertTuple(uint32(c), b, user.Id, data1)
+
+		tarantool.InsertTuple(id, b, user.Id, data1)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
