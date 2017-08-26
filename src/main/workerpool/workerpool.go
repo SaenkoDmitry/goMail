@@ -11,6 +11,10 @@ type Task interface {
 	Execute()
 }
 
+type Result struct {
+
+}
+
 var MainPool *Pool
 
 type Pool struct {

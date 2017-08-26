@@ -3,8 +3,8 @@ package tarantool
 import (
 	"fmt"
 	"github.com/tarantool/go-tarantool"
-	"time"
 	"main/utils"
+	"strconv"
 )
 
 var tarantoolConn *tarantool.Connection
@@ -15,14 +15,14 @@ func init() {
 
 
 func InitTarantool() *tarantool.Connection {
-
-	server := "127.0.0.1:3302"
+	a := utils.GetTarantool()
+	server := a.Host + ":" + strconv.Itoa(a.Port)
 	opts := tarantool.Opts{
-		Timeout:       500 * time.Millisecond,
-		Reconnect:     1 * time.Second,
-		MaxReconnects: 3,
-		User:          "test",
-		Pass:          "12345",
+		Timeout:       a.Timeout,
+		Reconnect:     a.Reconnect,
+		MaxReconnects: a.Maxreconnects,
+		User:          a.Username,
+		Pass:          a.Password,
 	}
 	conn, err := tarantool.Connect(server, opts)
 	if err != nil {

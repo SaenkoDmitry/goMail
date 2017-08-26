@@ -1,0 +1,7 @@
+username: "test"
+password: "12345"
+host: "localhost"
+port: 3302
+timeout: 500000000
+reconnect: 1000000000
+maxreconnects: 3

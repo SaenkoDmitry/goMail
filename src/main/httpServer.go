@@ -30,7 +30,7 @@ func main() {
 	router := mux.NewRouter()
 	handler.InitHandlers(router)
 
-	workerpool.MainPool = workerpool.NewPool(5) //create pool
+	workerpool.MainPool = workerpool.NewPool(10) //create pool
 	err := http.ListenAndServe(":9090", router) // set listen port
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

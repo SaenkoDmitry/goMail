@@ -1,0 +1,7 @@
+username: "adminGo"
+password: "gomail"
+protocol: "tcp"
+host: "localhost"
+port: 3306
+database: "tarantool_spaces_store"
+encoding: "charset=utf8"

@@ -206,7 +206,9 @@ func AddHistory(user_id uint64, space_id uint64, command string, result string) 
 }
 
 func InitMysql() (sql.DB) {
-	db, err := sql.Open("mysql", "adminGo:gomail@tcp(localhost:3306)/tarantool_spaces_store?charset=utf8")
+	a := utils.GetMysql()
+	conn := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?%s", a.Username, a.Password, a.Protocol, a.Host, a.Port, a.Database, a.Encoding)
+	db, err := sql.Open("mysql", conn)
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
