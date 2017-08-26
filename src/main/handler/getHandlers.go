@@ -9,6 +9,9 @@ import (
 	"main/utils"
 	"github.com/gorilla/mux"
 	"strconv"
+	"unicode/utf8"
+	"main/dbs/tarantool"
+	"main/workerpool"
 )
 
 func getAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +25,10 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 func getAllSpaces(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 7 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
 	if !exists || !exs {
@@ -37,7 +43,10 @@ func getAllSpaces(w http.ResponseWriter, r *http.Request) {
 
 func getUserHistory(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
 	if !exists || !exs {
@@ -53,7 +62,10 @@ func getUserHistory(w http.ResponseWriter, r *http.Request) {
 func getSpaceHistory(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
 	b := vars["name_space"]
@@ -75,10 +87,13 @@ func getSpaceHistory(w http.ResponseWriter, r *http.Request) {
 func getAllSpacePermissions(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
-	b := vars["name_sgit pace"]
+	b := vars["name_space"]
 	if !exists || !exs {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -97,7 +112,10 @@ func getAllSpacePermissions(w http.ResponseWriter, r *http.Request) {
 func getAllTuples(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
 	b := vars["name_space"]
@@ -105,48 +123,45 @@ func getAllTuples(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	s, err := strconv.ParseUint(b, 10, 64)
-	checkErr(err)
-	if !mysql.CheckPermissionsOnSpace(user.Id, s) {
+	space, exists := mysql.GetSpace(b, user.Id)
+	if !exists || !mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	// tarantool -------------------------------------------------------------
-	//opts := tarantool.Opts{User: a[0], Pass: b[0]}
-	//conn, err := tarantool.Connect("127.0.0.1:3302", opts)
-	//if err != nil {
-	//	fmt.Println("Connection refused: %s", err.Error())
-	//}
-	//resp, err := conn.Insert(10, []interface{}{99999, "BB"})
-	//if err != nil {
-	//	fmt.Println("Error", err)
-	//	fmt.Println("Code", resp.Code)
-	// -----------------------------------------------------------------------
-	//js, _ := json.Marshal(c)
+	c, _ := tarantool.SelectAllTuples(b, user.Id)
+	js, _ := json.Marshal(c)
 	w.WriteHeader(http.StatusOK)
-	//w.Write(js)
+	w.Write(js)
 }
 
 func getTuple(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
 	b := vars["name_space"]
-	//c := vars["name_tuple"]
+	c := vars["id_tuple"]
 	if !exists || !exs {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	s, err := strconv.ParseUint(b, 10, 64)
+	id, err := strconv.ParseUint(c, 10, 64)
 	checkErr(err)
-	if !mysql.CheckPermissionsOnSpace(user.Id, s) {
+	space, exists := mysql.GetSpace(b, user.Id)
+	if !exists || !mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	// tarantool -------------------------------------------------------------
-	//js, _ := json.Marshal(c)
+	// execute task of pool for access to tarantool -----------------------------------------------------
+	t := workerpool.TarantoolTask{"SelectTuple", id, b, user.Id, []interface{}{}}
+	workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
+	//---------------------------------------------------------------------------------------------------
+	//tuple, _ := tarantool.SelectTuple(s, b, user.Id)
+	js, _ := json.Marshal(tuple)
 	w.WriteHeader(http.StatusOK)
-	//w.Write(js)
+	w.Write(js)
 }

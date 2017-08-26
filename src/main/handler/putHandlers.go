@@ -6,51 +6,46 @@ import (
 	"main/utils"
 	"fmt"
 	"main/dbs/mysql"
+	"unicode/utf8"
+	"strconv"
+	"main/dbs/tarantool"
+	"encoding/json"
+	"io/ioutil"
 )
 
 func updateTuple(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	var data []interface{}
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		fmt.Println(err)
+	}
 	a, exists := utils.Cookies[token]
 	user, exs1 := mysql.GetUser(a)
-	b := vars["name_space"]
-	space, exs2 := mysql.GetSpace(b, user.Id)
-	c := vars["name_tuple"]
-	if exists && exs1 && exs2 && mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
-		fmt.Println(c)
-		mysql.AddHistory(user.Id, space.Id, "", "")
-		//update tarantool tuple ----------------------------------------------------------------------------
-	} else {
+	if !exists || !exs1 {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	b := vars["name_space"]
+	c := vars["id_tuple"]
+	s, err := strconv.ParseUint(c, 10, 64)
+	checkErr(err)
+	space, exists := mysql.GetSpace(b, user.Id)
+	if !exists || !mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	tarantool.UpdateTuple(s, b, user.Id, data)
 	w.WriteHeader(http.StatusOK)
 }
-
-//func updatePermissions(w http.ResponseWriter, r *http.Request) {
-//	vars := mux.Vars(r)
-//	r.ParseForm()
-//	token := r.Header.Get("Authorization")[7:]
-//	a, exists := utils.Cookies[token]
-//	if exists && a == vars["name"] {
-//		db := mysql.GetDb()
-//		rows, err := db.Query("SELECT * FROM users where name=?", a)
-//		if rows.Next() {
-//			var c model.User
-//			err = rows.Scan(&c.Id, &c.Name, &c.HashPassword)
-//			checkErr(err)
-//		}
-//
-//		//stmt, err := db.Prepare("INSERT permissions SET user_id=?, space_id=?, rights=?")
-//		checkErr(err)
-//
-//		//_, err = stmt.Exec(a, utils.HashPassword(b), "read")
-//		//checkErr(err)
-//		//_, err = stmt.Exec(a, utils.HashPassword(b), "write")
-//		//checkErr(err)
-//	} else {
-//		w.WriteHeader(http.StatusUnauthorized)
-//		return
-//	}
-//}

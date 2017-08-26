@@ -6,9 +6,19 @@ import (
 	"fmt"
 	"crypto/md5"
 	"io"
+	"unicode/utf8"
+	"strconv"
 )
 
 var Cookies map[string]string
+
+func ConvertToNameInDB(name string, user_id uint64) string {
+	return name + fmt.Sprintf("%v", user_id)
+}
+
+func ConvertToRealName(name string, user_id uint64) string {
+	return name[:utf8.RuneCountInString(name) - utf8.RuneCountInString(strconv.FormatUint(user_id, 10))]
+}
 
 var tokenEncodeString string = "somethingsdfsh/sdfdso;fds'SD/d"
 

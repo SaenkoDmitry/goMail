@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"github.com/tarantool/go-tarantool"
 	"time"
+	"main/utils"
 )
-
-var spaceNo uint32 = uint32(999)
-//var indexNo uint32 = uint32(0)
-
 
 var tarantoolConn *tarantool.Connection
 
@@ -34,62 +31,96 @@ func InitTarantool() *tarantool.Connection {
 	return conn
 }
 
-func convertToNameInTarantool(name string, user_id uint64) string {
-	return name + fmt.Sprintf("%v", user_id)
-}
-
-func CreateSpace(name string, user_id uint64) {
-	name = convertToNameInTarantool(name, user_id)
-	fmt.Println(name)
-	resp, err := tarantoolConn.Eval("box.schema.user.grant('test', 'read,write,execute', 'universe')\n" +
-		"box.schema.user.grant('test','read,write','space','" + name + "')\n" +
-		"box.schema.space.create('" + name + "', {id=10})\n" +
-		"box.space." + name + ":create_index('primary', {type = 'hash', parts = {1, 'NUM'}})\n",[] interface{}{})
+func CreateSpace(name_space string, user_id uint64) ([]interface{}, bool) {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	fmt.Println("name : " + name_space)
+	fmt.Println("string : " + "box.schema.space.create('" + name_space + "')\n" +
+		"box.space." + name_space + ":create_index('primary', {type = 'hash', parts = {1, 'NUM'}})\n")
+	resp, err := tarantoolConn.Eval("box.schema.space.create('" + name_space + "')\n" +
+		"box.space." + name_space + ":create_index('primary', {type = 'hash', parts = {1, 'NUM'}})\n",[] interface{}{})
 	if err != nil {
-		fmt.Println("0000")
 		fmt.Println(err)
+		return nil, false
 	}
-	fmt.Println("0001")
-	fmt.Println(resp.Data)
+	return resp.Data, true
 }
 
-func SelectSpace(name string, user_id uint64) {
-	name_spaceT := convertToNameInTarantool(name, user_id)
+//func SelectAllTuples(name_space string, user_id uint64) ([]interface{}, bool) {
+//	name_space = utils.ConvertToNameInDB(name_space, user_id)
+//	resp, err := tarantoolConn.Eval("box.space." + name_space + ":select{25}",[] interface{}{})
+//	if err != nil {
+//		fmt.Println(err)
+//		return nil, false
+//	}
+//	return resp.Data, true
+//}
 
-	resp, err := tarantoolConn.Select(name_spaceT, "primary", 0, 1, tarantool.IterEq, []interface{}{})
+//func SelectSpace(name_space string, user_id uint64) ([]interface{}, bool)  {
+//	name_space = utils.ConvertToNameInDB(name_space, user_id)
+//	resp, err := tarantoolConn.Select(name_space, "primary", 0, 1, tarantool.IterAll, []interface{}{})
+//	if err != nil {
+//		fmt.Println(err.Error())
+//		return nil, false
+//	}
+//	return resp.Data, true
+//}
+
+func DeleteSpace(name_space string, user_id uint64) ([]interface{}, bool)  {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	resp, err := tarantoolConn.Delete(name_space, "primary", []interface{}{})
 	if err != nil {
 		fmt.Println(err.Error())
+		return nil, false
 	}
-	fmt.Println(resp.Data)
+	return resp.Data, true
 }
 
-func DeleteTuple(tuple_id uint32, name_space string, user_id uint64) {
-	name_spaceT := convertToNameInTarantool(name_space, user_id)
-	name_spaceT = "examples" // temporary -------------------------------------------
-	resp, err := InitTarantool().Delete(name_spaceT, "primary", []interface{}{uint(tuple_id)})
+func DeleteTuple(tuple_id uint64, name_space string, user_id uint64) ([]interface{}, bool) {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	resp, err := InitTarantool().Delete(name_space, "primary", []interface{}{uint(tuple_id)})
 	if err != nil {
 		fmt.Println(err.Error())
+		return nil, false
 	}
-	fmt.Println(resp.Data)
+	return resp.Data, true
 }
 
-func SelectTuple(tuple_id uint64, name_space string, user_id uint64) {
-	name_spaceT := convertToNameInTarantool(name_space, user_id)
-	name_spaceT = "examples" // temporary -------------------------------------------
-
-	resp, err := tarantoolConn.Select(name_spaceT, "primary", 0, 1, tarantool.IterEq, []interface{}{uint(tuple_id)})
+func SelectTuple(tarantoolConn *tarantool.Connection, tuple_id uint64, name_space string, user_id uint64) ([]interface{}, bool) {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	resp, err := tarantoolConn.Select(name_space, "primary", 0, 1, tarantool.IterEq, []interface{}{uint(tuple_id)})
 	if err != nil {
 		fmt.Println(err.Error())
+		return nil, false
 	}
-	fmt.Println(resp.Data)
+	return resp.Data, true
 }
 
-func InsertTuple(tuple_id uint64, name_space string, user_id uint64, data interface{}) {
-	name_spaceT := convertToNameInTarantool(name_space, user_id)
-
-	_, err := tarantoolConn.Insert(name_spaceT, []interface{}{tuple_id, data})
+func InsertTuple(tarantoolConn *tarantool.Connection, tuple_id uint64, name_space string, user_id uint64, data interface{}) ([]interface{}, bool) {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	resp, err := tarantoolConn.Insert(name_space, []interface{}{tuple_id, data})
 	if err != nil {
 		fmt.Println(err.Error())
+		return nil, false
 	}
+	return resp.Data, true
 }
 
+func UpdateTuple(tuple_id uint64, name_space string, user_id uint64, data interface{}) ([]interface{}, bool) {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	resp, err := tarantoolConn.Replace(name_space, []interface{}{tuple_id, data})
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, false
+	}
+	return resp.Data, true
+}
+
+func SelectAllTuples(name_space string, user_id uint64) ([]interface{}, bool) {
+	name_space = utils.ConvertToNameInDB(name_space, user_id)
+	resp, err := tarantoolConn.Select(name_space, "primary", 0, 10, tarantool.IterAll, []interface{}{})
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, false
+	}
+	return resp.Data, true
+}

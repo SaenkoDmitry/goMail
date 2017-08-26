@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"strconv"
+	//"main/workerpool"
+	"unicode/utf8"
+	"io/ioutil"
 	"main/workerpool"
 )
 
@@ -54,7 +57,10 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 func addSpace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs := mysql.GetUser(a)
 	b := vars["name_space"]
@@ -62,7 +68,8 @@ func addSpace(w http.ResponseWriter, r *http.Request) {
 		mysql.AddSpace(b, user.Id)
 		space, _ := mysql.GetSpace(b, user.Id)
 		mysql.AddPermission(user.Id, space.Id)
-		//add tarantool space --------------------------------------------------------------------------
+		mysql.AddHistory(user.Id, space.Id, "added space : " + b, "OK")
+		tarantool.CreateSpace(b, user.Id)
 	} else {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -73,25 +80,24 @@ func addSpace(w http.ResponseWriter, r *http.Request) {
 func addTuple(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 
-	// temporarily
-	data := []byte(`
-    [
-        "k34rAT4",
-        24,
-        [
-			"aaa",
-			15
-        ],
-        1.25
-    ]
-	`)
-	var data1 []interface{}
-	err := json.Unmarshal(data, &data1)
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	var data []interface{}
+	err = json.Unmarshal([]byte(body), &data)
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println("data : ", data)
 
 	a, exists := utils.Cookies[token]
 	user, exs1 := mysql.GetUser(a)
@@ -110,12 +116,11 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 	if mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		fmt.Println(c)
 		mysql.AddHistory(user.Id, space.Id, "", "")
-		//try add tarantool tuple ----------------------------------------------------------------------------
-		t := workerpool.TarantoolTask{"insert", id, b, user.Id, data1}
+		// execute task of pool for access to tarantool -----------------------------------------------------
+		t := workerpool.TarantoolTask{"InsertTuple", id, b, user.Id, data}
 		workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
-		//----------------------------------------------------------------------------------------------------
-
-		tarantool.InsertTuple(id, b, user.Id, data1)
+		//---------------------------------------------------------------------------------------------------
+		//tarantool.InsertTuple(id, b, user.Id, data)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -126,23 +131,27 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 func addPermission(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	r.ParseForm()
-	token := r.Header.Get("Authorization")[7:]
+	token := r.Header.Get("Authorization")
+	if utf8.RuneCountInString(token) > 8 {
+		token = token[7:]
+	}
 	a, exists := utils.Cookies[token]
 	user, exs1 := mysql.GetUser(a)
 	b := vars["name"]
-	space, exs2 := mysql.GetSpace(b, user.Id)
 	c := vars["name_space"]
+	user2, exs2 := mysql.GetUser(b)
+	space, exs3 := mysql.GetSpace(c, user.Id)
 	if !exs1 || !exists {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	if !exs2 {
+	if !exs2 || !exs3 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	if mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
-		fmt.Println(c)
-		mysql.AddPermission(user.Id, space.Id)
+		mysql.AddPermission(user2.Id, space.Id)
+		mysql.AddHistory(user.Id, space.Id, "added permission for " + user2.Name + " on space " + c, "OK")
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

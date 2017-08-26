@@ -1,11 +1,10 @@
 package workerpool
 
 import (
-	"fmt"
 	"sync"
 	"time"
-
-	tarantool "github.com/tarantool/go-tarantool"
+	"github.com/tarantool/go-tarantool"
+	tarantool2 "main/dbs/tarantool"
 )
 
 type Task interface {
@@ -81,18 +80,38 @@ func (p *Pool) Exec(task Task) {
 }
 
 func (e TarantoolTask) Execute() {
-	//name_spaceT := convertToNameInTarantool(e.name_space, e.user_id)
-	name_spaceT := "examples"
 	tarantoolConn := InitTarantool()
-	_, err := tarantoolConn.Insert(name_spaceT, []interface{}{e.Tuple_id, e.Data})
-	if err != nil {
-		fmt.Println(err.Error())
+	switch e.Command {
+	case "CreateSpace":
+		{
+
+		}
+	case "DeleteSpace":
+		{
+
+		}
+	case "InsertTuple":
+		{
+			tarantool2.InsertTuple(tarantoolConn, e.Tuple_id, e.Name_space, e.User_id, e.Data)
+		}
+	case "SelectTuple":
+		{
+			tuple, _ := tarantool2.SelectTuple(tarantoolConn, e.Tuple_id, e.Name_space, e.User_id)
+		}
+	case "DeleteTuple":
+		{
+
+		}
+	case "UpdateTuple":
+		{
+
+		}
+	case "SelectAllTuples":
+		{
+
+		}
 	}
 }
-
-//func convertToNameInTarantool(name string, user_id uint64) string {
-//	return name + fmt.Sprintf("%v", user_id)
-//}
 
 func InitTarantool() *tarantool.Connection {
 
