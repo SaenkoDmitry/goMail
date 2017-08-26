@@ -85,7 +85,7 @@ func DeleteTuple(tuple_id uint64, name_space string, user_id uint64) ([]interfac
 	return resp.Data, true
 }
 
-func SelectTuple(tarantoolConn *tarantool.Connection, tuple_id uint64, name_space string, user_id uint64) ([]interface{}, bool) {
+func SelectTuple(tuple_id uint64, name_space string, user_id uint64) ([]interface{}, bool) {
 	name_space = utils.ConvertToNameInDB(name_space, user_id)
 	resp, err := tarantoolConn.Select(name_space, "primary", 0, 1, tarantool.IterEq, []interface{}{uint(tuple_id)})
 	if err != nil {
@@ -95,7 +95,7 @@ func SelectTuple(tarantoolConn *tarantool.Connection, tuple_id uint64, name_spac
 	return resp.Data, true
 }
 
-func InsertTuple(tarantoolConn *tarantool.Connection, tuple_id uint64, name_space string, user_id uint64, data interface{}) ([]interface{}, bool) {
+func InsertTuple(tuple_id uint64, name_space string, user_id uint64, data interface{}) ([]interface{}, bool) {
 	name_space = utils.ConvertToNameInDB(name_space, user_id)
 	resp, err := tarantoolConn.Insert(name_space, []interface{}{tuple_id, data})
 	if err != nil {

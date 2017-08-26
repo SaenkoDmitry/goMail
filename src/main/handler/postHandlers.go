@@ -12,7 +12,6 @@ import (
 	//"main/workerpool"
 	"unicode/utf8"
 	"io/ioutil"
-	"main/workerpool"
 )
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +49,7 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusOK)
-	js, _ := json.Marshal(token)
+	js, _ := json.MarshalIndent(token, "", " ")
 	w.Write(js)
 }
 
@@ -116,11 +115,11 @@ func addTuple(w http.ResponseWriter, r *http.Request) {
 	if mysql.CheckPermissionsOnSpace(user.Id, space.Id) {
 		fmt.Println(c)
 		mysql.AddHistory(user.Id, space.Id, "", "")
-		// execute task of pool for access to tarantool -----------------------------------------------------
-		t := workerpool.TarantoolTask{"InsertTuple", id, b, user.Id, data}
-		workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
-		//---------------------------------------------------------------------------------------------------
-		//tarantool.InsertTuple(id, b, user.Id, data)
+		//// execute task of pool for access to tarantool -----------------------------------------------------
+		//t := workerpool.TarantoolTask{"InsertTuple", id, b, user.Id, data}
+		//workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
+		////---------------------------------------------------------------------------------------------------
+		tarantool.InsertTuple(id, b, user.Id, data)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return

@@ -31,7 +31,5 @@
         * curl -X PUT -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}/tuples/id_tuple}
         
 * **DELETE**
-    * /spaces/{name_space} -- удаление пространства
-        * curl -X DELETE -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}
     * /spaces/{name_space}/tuples/{id_tuple} -- удаление кортежа
         * curl -X DELETE -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}/tuples/{id_tuple}

@@ -34,6 +34,6 @@ func InitHandlers(router *mux.Router) {
 
 	//router.HandleFunc("/users", deleteUser).Methods("DELETE")
 	//router.HandleFunc("/users/{name}/permissions", deletePermission).Methods("DELETE")
-	router.HandleFunc("/spaces/{name_space}", deleteSpace).Methods("DELETE")
+	//router.HandleFunc("/spaces/{name_space}", deleteSpace).Methods("DELETE")
 	router.HandleFunc("/spaces/{name_space}/tuples/{id_tuple}", deleteTuple).Methods("DELETE")
 }

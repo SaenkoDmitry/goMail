@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 	"github.com/tarantool/go-tarantool"
-	tarantool2 "main/dbs/tarantool"
 )
 
 type Task interface {
@@ -84,7 +83,7 @@ func (p *Pool) Exec(task Task) {
 }
 
 func (e TarantoolTask) Execute() {
-	tarantoolConn := InitTarantool()
+	//tarantoolConn := InitTarantool()
 	switch e.Command {
 	case "CreateSpace":
 		{
@@ -96,11 +95,11 @@ func (e TarantoolTask) Execute() {
 		}
 	case "InsertTuple":
 		{
-			tarantool2.InsertTuple(tarantoolConn, e.Tuple_id, e.Name_space, e.User_id, e.Data)
+			//tarantool2.InsertTuple(tarantoolConn, e.Tuple_id, e.Name_space, e.User_id, e.Data)
 		}
 	case "SelectTuple":
 		{
-			tuple, _ := tarantool2.SelectTuple(tarantoolConn, e.Tuple_id, e.Name_space, e.User_id)
+			//tuple, _ := tarantool2.SelectTuple(tarantoolConn, e.Tuple_id, e.Name_space, e.User_id)
 		}
 	case "DeleteTuple":
 		{

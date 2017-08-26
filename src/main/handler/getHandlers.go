@@ -11,13 +11,12 @@ import (
 	"strconv"
 	"unicode/utf8"
 	"main/dbs/tarantool"
-	"main/workerpool"
 )
 
 func getAllUsers(w http.ResponseWriter, r *http.Request) {
 	var a[]model.User
 	a = mysql.SelectAllUser()
-	js, err := json.Marshal(a)
+	js, err := json.MarshalIndent(a, "", "  ")
 	checkErr(err)
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
@@ -36,7 +35,7 @@ func getAllSpaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b, _ := mysql.GetAllSpaces(user.Id)
-	js, _ := json.Marshal(b)
+	js, _ := json.MarshalIndent(b, "", " ")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
@@ -54,7 +53,7 @@ func getUserHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b, _ := mysql.GetUserHistory(user.Id)
-	js, _ := json.Marshal(b)
+	js, _ := json.MarshalIndent(b, "", " ")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
@@ -79,7 +78,7 @@ func getSpaceHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c, _ := mysql.GetSpaceHistory(user.Id)
-	js, _ := json.Marshal(c)
+	js, _ := json.MarshalIndent(c, "", " ")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
@@ -104,7 +103,7 @@ func getAllSpacePermissions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c, _ := mysql.GetSpacePermissions(space.Id)
-	js, _ := json.Marshal(c)
+	js, _ := json.MarshalIndent(c, "", " ")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
@@ -129,7 +128,7 @@ func getAllTuples(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c, _ := tarantool.SelectAllTuples(b, user.Id)
-	js, _ := json.Marshal(c)
+	js, _ := json.MarshalIndent(c, "", " ")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
@@ -156,12 +155,12 @@ func getTuple(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	// execute task of pool for access to tarantool -----------------------------------------------------
-	t := workerpool.TarantoolTask{"SelectTuple", id, b, user.Id, []interface{}{}}
-	workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
-	//---------------------------------------------------------------------------------------------------
-	//tuple, _ := tarantool.SelectTuple(s, b, user.Id)
-	js, _ := json.Marshal(tuple)
+	//// execute task of pool for access to tarantool -----------------------------------------------------
+	//t := workerpool.TarantoolTask{"SelectTuple", id, b, user.Id, []interface{}{}}
+	//workerpool.MainPool.Exec(workerpool.TarantoolTask(t))
+	////---------------------------------------------------------------------------------------------------
+	tuple, _ := tarantool.SelectTuple(id, b, user.Id)
+	js, _ := json.MarshalIndent(tuple, "", " ")
 	w.WriteHeader(http.StatusOK)
 	w.Write(js)
 }
