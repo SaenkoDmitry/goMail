@@ -8,9 +8,37 @@ import (
 	"io"
 	"unicode/utf8"
 	"strconv"
+	"go.uber.org/zap"
+	"errors"
+	"sync"
+	"net/http"
+	"encoding/json"
+)
+
+var (
+	Logger, _ = zap.NewProduction()
+	Mu = &sync.Mutex{}
 )
 
 var Cookies map[string]string
+
+func WriteResponse(w http.ResponseWriter, err error, resp interface{}, code int) {
+	result := generateResult(err, resp)
+	w.WriteHeader(code)
+	js, _ := json.MarshalIndent(result, "", "  ")
+	w.Write(js)
+}
+
+func generateResult(err error, resp interface{}) (res map[string]interface{}) {
+	res = make(map[string]interface{})
+	if err != nil {
+		res["error"] = err.Error()
+	} else {
+		res["error"] = nil
+	}
+	res["response"] = resp
+	return
+}
 
 func ConvertToNameInDB(name string, user_id uint64) string {
 	return name + fmt.Sprintf("%v", user_id)
@@ -21,6 +49,15 @@ func ConvertToRealName(name string, user_id uint64) string {
 }
 
 var tokenEncodeString string = "somethingsdfsh/sdfdso;fds'SD/d"
+
+func HandleToken(s string) (string, error) {
+	if utf8.RuneCountInString(s) > 8 {
+		s = s[7:]
+	} else {
+		return "", errors.New("too short authorization string")
+	}
+	return s, nil
+}
 
 func CreateToken(user string, password string) (string, error) {
 	// create the token
@@ -56,5 +93,7 @@ func HashPassword(password string) string {
 }
 
 func init() {
+	Mu.Lock()
 	Cookies = make(map[string]string)
+	Mu.Unlock()
 }

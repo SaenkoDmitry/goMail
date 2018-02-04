@@ -8,7 +8,7 @@
     * /history -- получение истории пользователя
         * curl -X GET -H "Authorization: Bearer token" -i http://localhost:9090/history
     * /space/{name_space}/history -- получение истории работы с пространством
-        * curl -X GET -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_spaces}/history
+        * curl -X GET -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}/history
     * /spaces/{name_space}/permissions -- получение списка пользователей, имеющих доступ к данному пространству
         * curl -X GET -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}/permissions
     * /spaces/{name_space}/tuples -- получение списка кортежей в данном пространстве
@@ -28,7 +28,7 @@
 
 * **PUT**
     * /spaces/{name_space}/tuples/{id_tuple} -- обновление кортежа
-        * curl -X PUT -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}/tuples/id_tuple}
+        * curl -X PUT -H "Authorization: Bearer token" -i http://localhost:9090/spaces/{name_space}/tuples/id_tuple} -d "[\"aaa\", \"aa\", \"abd\"]"
         
 * **DELETE**
     * /spaces/{name_space}/tuples/{id_tuple} -- удаление кортежа

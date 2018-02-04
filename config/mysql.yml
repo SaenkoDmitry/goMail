@@ -1,5 +1,5 @@
-username: "adminGo"
-password: "gomail"
+username: "gomail"
+password: "12345"
 protocol: "tcp"
 host: "localhost"
 port: 3306

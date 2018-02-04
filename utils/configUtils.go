@@ -2,9 +2,10 @@ package utils
 
 import (
 	"gopkg.in/yaml.v2"
-	"log"
 	"io/ioutil"
 	"time"
+	"log"
+	"go.uber.org/zap"
 )
 
 type mysql struct {
@@ -29,7 +30,7 @@ type tarantool struct {
 
 func GetMysql() mysql {
 	t := mysql{}
-	b, err := ioutil.ReadFile("src/main/config/mysql.yml")
+	b, err := ioutil.ReadFile("config/mysql.yml")
 	if err != nil {
 		log.Fatalf("Cannot open file mysql.yml : ", err)
 	}
@@ -43,14 +44,19 @@ func GetMysql() mysql {
 
 func GetTarantool() tarantool {
 	t := tarantool{}
-	b, err := ioutil.ReadFile("src/main/config/tarantool.yml")
+	b, err := ioutil.ReadFile("config/tarantool.yml")
 	if err != nil {
-		log.Fatalf("Cannot open file tarantool.yml : ", err)
+		Logger.Info("Cannot open file tarantool.yml",
+			zap.Error(err),
+		)
 	}
 	data := string(b)
 	err = yaml.Unmarshal([]byte(data), &t)
 	if err != nil {
 		log.Fatalf("error: %v", err)
+		Logger.Info("unmarshal yaml error",
+			zap.Error(err),
+		)
 	}
 	return t
 }
